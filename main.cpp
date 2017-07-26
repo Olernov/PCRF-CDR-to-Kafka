@@ -16,7 +16,7 @@ void log(short msgType, std::string msgText)
 
 void printUsage()
 {
-    std::cerr << "Usage: " << std::endl << "pgw-to-kafka <config-file> [-test]" << std::endl;
+    std::cerr << "Usage: " << std::endl << "pcrfcdr-to-kafka <config-file> [-test]" << std::endl;
 }
 
 
@@ -45,15 +45,15 @@ int main(int argc, const char* argv[])
         std::cerr << ex.what() <<std::endl;
         exit(EXIT_FAILURE);
     }
-    const std::string pidFilename = "/var/run/pgw-to-kafka.pid";
+    const std::string pidFilename = "/var/run/pcrf-to-kafka.pid";
     std::ofstream pidFile(pidFilename, std::ofstream::out);
     if (pidFile.is_open()) {
         pidFile << getpid();
     }
     pidFile.close();
 
-    logWriter.Initialize(config.logDir, "pgw", config.logLevel);
-    logWriter << "PGW-to-Kafka start";
+    logWriter.Initialize(config.logDir, "pcrf", config.logLevel);
+    logWriter << "PCRF-CDR-to-Kafka start";
     logWriter << config.DumpAllSettings();
 
     try {
@@ -68,7 +68,6 @@ int main(int argc, const char* argv[])
                                    config.inputDir,
                                    config.cdrExtension, config.archiveDir, config.badDir,
                                    runTests);
-            // mlc.SetPrintContents(true);
             mlc.Run();
         }
     }
@@ -76,7 +75,7 @@ int main(int argc, const char* argv[])
         std::cerr << ex.what() << std::endl;
         logWriter.Write(ex.what(), LogWriter::mainThr, error);
     }
-    logWriter << "PGW-to-Kafka shutdown";
+    logWriter << "PCRF-CDR-to-Kafka shutdown";
     filesystem::remove(pidFilename);
     return 0;
 }

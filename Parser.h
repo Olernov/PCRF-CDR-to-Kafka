@@ -105,7 +105,7 @@ private:
     std::vector<uint8_t> EncodeCdr(const PCRF_CDR& avroCdr);
     int64_t TextualTimeToUnixTime(const std::string& textualEventTime);
     int64_t TextualIPAddrToInt(const std::string& textualIpAddr);
-    void LogParseError(std::string line);
+    void LogParseError(const std::string& line, const std::string& errDescr);
 };
 
 

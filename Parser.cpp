@@ -136,18 +136,6 @@ void Parser::ProcessFile(const filesystem::path& file)
 }
 
 
-void Parser::LogParseError(const std::string& line, const std::string& errDescr)
-{
-    logWriter.Write("Next line has bad format:", LogWriter::mainThr, error);
-    logWriter.Write(line, LogWriter::mainThr, error);
-    logWriter.Write(errDescr, LogWriter::mainThr, error);
-    if (runTest) {
-        std::cout << "Next line has bad format:" << std::endl;
-        std::cout << line  << std::endl;
-        std::cout << errDescr << std::endl;
-    }
-}
-
 uint32_t Parser::ParseFile(std::ifstream& cdrStream, const std::string& filename)
 {
     std::string line;
@@ -276,6 +264,19 @@ void Parser::WaitForKafkaQueue()
 }
 
 
+void Parser::LogParseError(const std::string& line, const std::string& errDescr)
+{
+    logWriter.Write("Next line has bad format:", LogWriter::mainThr, error);
+    logWriter.Write(line, LogWriter::mainThr, error);
+    logWriter.Write(errDescr, LogWriter::mainThr, error);
+    if (runTest) {
+        std::cout << "Next line has bad format:" << std::endl;
+        std::cout << line  << std::endl;
+        std::cout << errDescr << std::endl;
+    }
+}
+
+
 bool Parser::CompareSentAndConsumedRecords(int64_t startOffset)
 {
     std::string errstr;
@@ -310,7 +311,6 @@ bool Parser::CompareSentAndConsumedRecords(int64_t startOffset)
         }
         if (message->err() == RdKafka::ERR_NO_ERROR) {
             consumed++;
-            //std::cout << "Read msg #" << consumed << " at offset " << message->offset() << std::endl;
             PCRF_CDR avroCdr;
             std::unique_ptr<avro::InputStream> in(avro::memoryInputStream(
                                          static_cast<uint8_t*>(message->payload()), message->len()));
