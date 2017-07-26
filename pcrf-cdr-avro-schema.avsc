@@ -1,0 +1,13 @@
+{"namespace": "ru.tenet.avro.schema.pcrf",
+ "type": "record",
+ "name": "PCRF_CDR",
+ "fields": [
+     {"name": "isSessionStart", "type": "boolean"},
+     {"name": "sessionID", "type": "string"},
+     {"name": "eventTime", "type": "long", "logicalType": "timestamp-millis"},
+     {"name": "iMSI", "type": ["null", "long"]},
+     {"name": "iPAddress",  "type": ["null", "long"]},
+     {"name": "iMEI",  "type": ["null", "string"]},
+     {"name": "aPN",  "type": ["null", "string"]}
+  ]
+}
