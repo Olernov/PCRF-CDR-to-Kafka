@@ -12,7 +12,7 @@ public:
     void Run();
     ~MainLoopController();
 private:
-    const int secondsToSleepWhenNothingToDo = 3;
+    const int secondsToSleepWhenNothingToDo = 1;
     Parser parser;
     std::string cdrFilesDirectory;
     std::string cdrExtension;

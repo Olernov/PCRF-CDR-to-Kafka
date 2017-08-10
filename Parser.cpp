@@ -145,22 +145,22 @@ uint32_t Parser::ParseFile(std::ifstream& cdrStream, const std::string& filename
         recordCount++;
         std::istringstream iss(line);
         PCRF_CDR avroCdr;
-        std::string recordType, textualEventTime;
-        if (!(iss >> recordType >> avroCdr.sessionID >> textualEventTime)) {
-            LogParseError(line, "Could not extract recordType, sessionID, textualEventTime");
+        //std::string recordType, textualEventTime;
+        short recordType;
+        if (!(iss >> recordType >> avroCdr.sessionID >> avroCdr.eventTime)) {
+            LogParseError(line, "Could not extract recordType, sessionID, eventTime");
             continue;
         }
-        if (recordType == "start") {
+        if (recordType == 0) {
             avroCdr.isSessionStart = true;
         }
-        else if (recordType == "stop") {
+        else if (recordType == 1) {
             avroCdr.isSessionStart = false;
         }
         else {
-            LogParseError(line, "Record type differs from start/stop");
+            LogParseError(line, "Record type differs from 0/1 (start/stop)");
             continue;
         }
-        avroCdr.eventTime = TextualTimeToUnixTime(textualEventTime);
         if (avroCdr.isSessionStart) {
             int64_t imsi;
             std::string textualIpAddr, imei, apn;
@@ -215,7 +215,7 @@ void Parser::SendRecordToKafka(const PCRF_CDR& pcrfCdr)
     }
     else {
         if (runTest) {
-            auto res = sentAvroCdrs.insert(pcrfCdr);
+            sentAvroCdrs.insert(pcrfCdr);
             auto it = sentAvroCdrs.find(pcrfCdr);
             assert (it != sentAvroCdrs.end());
         }
@@ -305,7 +305,6 @@ bool Parser::CompareSentAndConsumedRecords(int64_t startOffset)
     bool failedToFindCdr = false;
     while(true) {
         std::unique_ptr<RdKafka::Message> message(consumer->consume(topic.get(), kafkaPartition, 5000));
-        RdKafka::MessageTimestamp mt = message->timestamp();
         if (message->err() == RdKafka::ERR__TIMED_OUT) {
             if (consumed > 0) {
                 // consider we have read all records
@@ -416,7 +415,7 @@ void Parser::RunTests()
 {
     sentAvroCdrs.clear();
     PCRF_CDR emptyCdr, cdr, cdr3;
-    auto res = sentAvroCdrs.insert(emptyCdr);
+    sentAvroCdrs.insert(emptyCdr);
     auto it = sentAvroCdrs.find(emptyCdr);
     assert(it != sentAvroCdrs.end());
 

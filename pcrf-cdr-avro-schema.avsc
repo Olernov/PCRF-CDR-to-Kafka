@@ -1,4 +1,4 @@
-{"namespace": "ru.tenet.avro.schema.pcrf",
+{"namespace": "ru.tenet.databus.avro.schema.domain",
  "type": "record",
  "name": "PCRF_CDR",
  "fields": [
