@@ -121,7 +121,7 @@ void Parser::ProcessFile(const filesystem::path& file)
             logWriter << "File " + file.filename().string() + " moved to bad files directory " + cdrBadDirectory;
         }
     }
-    long processTimeSec = difftime(time(nullptr), processStartTime);
+    double processTimeSec = difftime(time(nullptr), processStartTime);
     logWriter << "File " + file.filename().string() + " having " +std::to_string(recordCount) +
                  " records processed in " +
                  std::to_string(processTimeSec) + " sec.";
@@ -130,7 +130,8 @@ void Parser::ProcessFile(const filesystem::path& file)
         std::cout << "sentAvroCdrs.size(): "  << sentAvroCdrs.size() << ", recordCount: " <<recordCount <<std::endl;
         assert(sentAvroCdrs.size() == recordCount);
         std::cout<< "Consuming sent records from Kafka ..." << std::endl;
-        assert(CompareSentAndConsumedRecords(highOffset));
+        /*assert(*/
+        CompareSentAndConsumedRecords(highOffset);
     }
     cdrStream.close();
 }
@@ -306,8 +307,10 @@ bool Parser::CompareSentAndConsumedRecords(int64_t startOffset)
         std::unique_ptr<RdKafka::Message> message(consumer->consume(topic.get(), kafkaPartition, 5000));
         RdKafka::MessageTimestamp mt = message->timestamp();
         if (message->err() == RdKafka::ERR__TIMED_OUT) {
-            // consider we have read all records
-            break;
+            if (consumed > 0) {
+                // consider we have read all records
+                break;
+            }
         }
         if (message->err() == RdKafka::ERR_NO_ERROR) {
             consumed++;
