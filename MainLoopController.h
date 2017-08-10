@@ -12,6 +12,7 @@ public:
     void Run();
     ~MainLoopController();
 private:
+    typedef std::vector<filesystem::path> fileList;
     const int secondsToSleepWhenNothingToDo = 1;
     Parser parser;
     std::string cdrFilesDirectory;
@@ -23,6 +24,8 @@ private:
     bool printFileContents;
     bool stopFlag;
 
+    void ConstructSortedFileList(const std::string& inputDir,
+                                 const std::string &cdrExtension, fileList &sourceFiles);
     bool IsShutdownFlagSet();
     void Sleep();
 };

@@ -28,16 +28,14 @@ void MainLoopController::Run()
     std::string lastPostponeReason;
     while(!IsShutdownFlagSet()) {
         try {
-            filesystem::directory_iterator endIterator;
-            bool filesFound = false;
-            for(filesystem::directory_iterator dirIterator(cdrPath); dirIterator != endIterator; dirIterator++) {
-                if (filesystem::is_regular_file(dirIterator->status()) &&
-                        dirIterator->path().extension() == cdrExtension) {
-                    filesFound = true;
-                    allCdrProcessed = false;
+            fileList sourceFiles;
+            ConstructSortedFileList(cdrFilesDirectory, cdrExtension, sourceFiles);
+            if (sourceFiles.size() > 0) {
+                allCdrProcessed = false;
+                for (auto& file : sourceFiles) {
                     if (parser.IsReady()) {
                         lastPostponeReason.clear();
-                        parser.ProcessFile(dirIterator->path());
+                        parser.ProcessFile(file);
                     }
                     else {
                         if (lastPostponeReason != parser.GetPostponeReason()) {
@@ -51,7 +49,7 @@ void MainLoopController::Run()
                     }
                 }
             }
-            if (!filesFound) {
+            else {
                 if (!allCdrProcessed) {
                     allCdrProcessed = true;
                     logWriter << "All CDR files processed.";
@@ -66,6 +64,22 @@ void MainLoopController::Run()
         }
     }
     logWriter << "Shutting down ...";
+}
+
+
+void MainLoopController::ConstructSortedFileList(const std::string& inputDir,
+                                                 const std::string& cdrExtension,
+                                                 fileList& sourceFiles)
+{
+    filesystem::path inputPath(inputDir);
+    filesystem::directory_iterator endIterator;
+    for(filesystem::directory_iterator iter(inputPath); iter != endIterator; iter++) {
+        if (filesystem::is_regular_file(iter->status())
+                && iter->path().extension() == cdrExtension) {
+            sourceFiles.push_back(iter->path());
+        }
+    }
+    std::sort(sourceFiles.begin(), sourceFiles.end());
 }
 
 

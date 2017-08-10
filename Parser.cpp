@@ -130,7 +130,6 @@ void Parser::ProcessFile(const filesystem::path& file)
         std::cout << "sentAvroCdrs.size(): "  << sentAvroCdrs.size() << ", recordCount: " <<recordCount <<std::endl;
         assert(sentAvroCdrs.size() == recordCount);
         std::cout<< "Consuming sent records from Kafka ..." << std::endl;
-        /*assert(*/
         CompareSentAndConsumedRecords(highOffset);
     }
     cdrStream.close();
@@ -141,14 +140,15 @@ uint32_t Parser::ParseFile(std::ifstream& cdrStream, const std::string& filename
 {
     std::string line;
     int recordCount  = 0;
+    bool gotErrors = false;
     while(std::getline(cdrStream, line)) {
         recordCount++;
         std::istringstream iss(line);
         PCRF_CDR avroCdr;
-        //std::string recordType, textualEventTime;
         short recordType;
         if (!(iss >> recordType >> avroCdr.sessionID >> avroCdr.eventTime)) {
             LogParseError(line, "Could not extract recordType, sessionID, eventTime");
+            gotErrors = true;
             continue;
         }
         if (recordType == 0) {
@@ -159,13 +159,15 @@ uint32_t Parser::ParseFile(std::ifstream& cdrStream, const std::string& filename
         }
         else {
             LogParseError(line, "Record type differs from 0/1 (start/stop)");
+            gotErrors = true;
             continue;
         }
         if (avroCdr.isSessionStart) {
-            int64_t imsi;
-            std::string textualIpAddr, imei, apn;
-            if (!(iss >> imsi >> textualIpAddr)) {
+            int64_t imsi, ipAddr;
+            std::string imei, apn;
+            if (!(iss >> imsi >> ipAddr)) {
                 LogParseError(line, "Could not extract imsi, textualIpAddr");
+                gotErrors = true;
                 continue;
             }
             std::string dummy;
@@ -174,10 +176,11 @@ uint32_t Parser::ParseFile(std::ifstream& cdrStream, const std::string& filename
             getline(iss,   apn, '\t');
             if (apn.empty()) {
                 LogParseError(line, "Could not extract APN");
+                gotErrors = true;
                 continue;
             }
             avroCdr.iMSI.set_long(imsi);
-            avroCdr.iPAddress.set_long( TextualIPAddrToInt(textualIpAddr) );
+            avroCdr.iPAddress.set_long(ipAddr);
             if (!imei.empty()) {
                 avroCdr.iMEI.set_string(imei);
             }
@@ -186,10 +189,12 @@ uint32_t Parser::ParseFile(std::ifstream& cdrStream, const std::string& filename
             }
             avroCdr.aPN.set_string(apn);
         }
-
         SendRecordToKafka(avroCdr);
     }
     kafkaProducer->poll(0);
+    if (gotErrors) {
+        throw std::runtime_error("Parsing errors occured.");
+    }
     return recordCount;
 }
 
